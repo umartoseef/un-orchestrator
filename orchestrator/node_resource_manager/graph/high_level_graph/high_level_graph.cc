@@ -123,6 +123,16 @@ map<string, list<unsigned int> > Graph::getNetworkFunctions()
 	return networkFunctions;
 }
 
+map<string, list<pair<string, string> > > Graph::getNetworkFunctionsConfiguration()
+{
+	return networkFunctionsConfiguration;
+}
+
+map<string, list<pair<string, string> > > Graph::getNetworkFunctionsControlConfiguration()
+{
+	return networkFunctionsControlConfiguration;
+}
+
 list<Rule> Graph::getRules()
 {
 	return rules;
@@ -149,6 +159,34 @@ bool Graph::addNetworkFunction(string nf)
 
 	list<unsigned int> ports;
 	networkFunctions[nf] = ports;
+	
+	return true;
+}
+
+bool Graph::addNetworkFunctionPortConfiguration(string nf, pair<string, string> config)
+{
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionPortConfiguration(\"%s\"->\"%s\":\"%s\")",nf.c_str(), config.first.c_str(), config.second.c_str());
+
+	if(networkFunctionsConfiguration.count(nf) != 0) {
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionPortConfiguration(\"%s\") NF already present!",nf.c_str());
+		return false;
+	}
+
+	networkFunctionsConfiguration[nf].push_back(config);
+	
+	return true;
+}
+
+bool Graph::addNetworkFunctionControlConfiguration(string nf, pair<string, string> control)
+{
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionControlConfiguration(\"%s\"->\"%s\":\"%s\")",nf.c_str(), control.first.c_str(), control.second.c_str());
+
+	if(networkFunctionsControlConfiguration.count(nf) != 0) {
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionControlConfiguration(\"%s\") NF already present!",nf.c_str());
+		return false;
+	}
+
+	networkFunctionsControlConfiguration[nf].push_back(control);
 	
 	return true;
 }

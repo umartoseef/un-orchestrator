@@ -394,7 +394,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	}
 
 	//store the switch-uuid
-    switch_uuid[dnumber] = strr[i-2];
+	switch_uuid[dnumber] = strr[i-2];
 
 	/*create physical ports ports*/
 	if(ports.size() !=0){
@@ -409,15 +409,13 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	
 	/*Create interfaces related to the NFs*/
 	map<string,list<string> > out_nf_ports_name_on_switch;
-    if(nfs.size() != 0) {
+	if(nfs.size() != 0) {
         		
 		/*for each network function port in the list of nfs*/
 		for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 		{
 			list<struct nf_port_info> nfs_ports = cli.getNetworkFunctionsPortsInfo(*nf);
-			
 			list<string> port_names_on_switch;
-			
 			map<string,unsigned int> n_ports_1;
 			
 			/*for each network function port in the list of nfs_ports*/

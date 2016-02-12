@@ -183,8 +183,10 @@ public:
 	*
 	*	@param:	nf_name					Name of the network function to be started
 	*	@param: namesOfPortsOnTheSwitch	Names of ports on the vSwitch that are related to the network function to be started
+	*	@param: portsConfiguration		Ports configuration (mac address, ip address)
+	*	@param: controlConfiguration	Control ports configuration (host tcp port, vnf tcp port)
 	*/
-	bool startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch);
+	bool startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string> > portsConfiguration, list<pair<string, string> > controlConfiguration);
 	
 	/**
 	*	@brief: Stop all the running NFs

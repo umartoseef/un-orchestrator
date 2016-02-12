@@ -49,9 +49,14 @@
 	#define VNFS 				"VNFs"
 		//#define VNF_NAME			"name"
 		#define	VNF_TEMPLATE		"vnf_template"
+		#define VNF_CONTROL			"unify-control"
+			#define HOST_PORT			"host-tcp-port"
+			#define VNF_PORT			"vnf-tcp-port"
 		#define	VNF_PORTS			"ports"
 			//#define PORT_ID			"id"
 			//#define PORT_NAME		"name"
+			#define PORT_MAC			"mac"
+			#define PORT_IP				"unify-ip"
 		#define	VNF_GROUPS		"groups"
 	#define END_POINTS		"end-points"
 		//#define EP_ID     		"id"
@@ -70,7 +75,7 @@
 			#define REMOTE_IP		"remote-ip"
 			#define TTL				"ttl"
 			#define GRE_KEY			"gre-key"
-			#define SAFE			"safe"
+			#define SAFE			"secure"
 		#define VLAN			"vlan"
 			#define V_ID			"vlan-id"
 						
@@ -161,7 +166,7 @@
 *
 *	XXX This constants must be updated in case the XML schema is modified
 */
-#define PHY_PORTS_XSD			"/root/universal-node-schema.xsd"
+#define PHY_PORTS_XSD			"universal-node-schema.xsd"
 
 #define RESOURCES_ELEMENT		"resources"
 #define CPU_ELEMENT				"cpu"

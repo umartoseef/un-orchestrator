@@ -969,9 +969,11 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							map<string,string> ipv4_addresses; 	//port name, ipv4 address
 							map<string,string> ipv4_masks;		//port name, ipv4 address
 
-							string id, name, vnf_template, groups, port_id, port_name;
-							//list of pair port id, port name related by the VNF
-							list<pair<string, string> > portS;
+							string id, name, vnf_template, groups, port_id, port_name, port_mac, port_ip, vnf_tcp_port, host_tcp_port;
+							//list of four element port id, port name, mac address and ip address related by the VNF
+							list<vector<string> > portS;
+							//list of pair element host tcp port and vnf tcp port related by the VNF
+							list<pair<string, string> > portC;
 
 							//Parse the network function
 							for(Object::const_iterator nf = network_function.begin(); nf != network_function.end(); nf++)
@@ -1009,6 +1011,48 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									//store value of VNF id
 									id.assign(nf_value.getString().c_str());
 								}
+								else if(nf_name == VNF_CONTROL)
+								{
+									const Array& control_array = nf_value.getArray();
+								
+									//Itearate on the control
+									for( unsigned int ctrl = 0; ctrl < control_array.size(); ++ctrl )
+									{
+										//This is a VNF control, with an host tcp port and a vnf tcp port 
+										Object control = control_array[ctrl].getObject();
+										
+										vector<string> port_descr(4);
+										
+										//Parse the control
+										for(Object::const_iterator c = control.begin(); c != control.end(); c++)
+										{
+											const string& c_name  = c->first;
+											const Value&  c_value = c->second;
+											
+											if(c_name == HOST_PORT)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_CONTROL,HOST_PORT,c_value.getString().c_str());
+												
+												host_tcp_port = c_value.getString();
+											}
+											else if(c_name == VNF_PORT)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_CONTROL,VNF_PORT,c_value.getString().c_str());
+												
+												vnf_tcp_port = c_value.getString();
+											}
+										}
+										
+										//Add NF control ports descriptions
+										if(!graph.addNetworkFunctionControlConfiguration(name, make_pair(host_tcp_port, vnf_tcp_port)))
+										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
+											return false;
+										}
+										
+										portC.push_back(make_pair(host_tcp_port, vnf_tcp_port));
+									}
+								}
 								else if(nf_name == VNF_PORTS)
 								{
 									const Array& ports_array = nf_value.getArray();
@@ -1018,6 +1062,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									{
 										//This is a VNF port, with an ID and a name
 										Object port = ports_array[ports].getObject();
+										
+										vector<string> port_descr(4);
 										
 										//Parse the port
 										for(Object::const_iterator p = port.begin(); p != port.end(); p++)
@@ -1030,12 +1076,32 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,_ID,p_value.getString().c_str());
 												
 												port_id = p_value.getString();
+												
+												port_descr[0] = port_id;
 											}
 											else if(p_name == _NAME)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,_NAME,p_value.getString().c_str());
 												
 												port_name = p_value.getString();
+												
+												port_descr[1] = port_name;
+											}
+											else if(p_name == PORT_MAC)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_MAC,p_value.getString().c_str());
+												
+												port_mac = p_value.getString();
+												
+												port_descr[2] = port_mac;
+											}
+											else if(p_name == PORT_IP)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_IP,p_value.getString().c_str());
+												
+												port_ip = p_value.getString();
+												
+												port_descr[3] = port_ip;
 											}
 											else
 											{
@@ -1044,7 +1110,14 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											}
 										}
 										
-										portS.push_back(make_pair(port_id, port_name));	
+										//Add NF ports descriptions
+										if(!graph.addNetworkFunctionPortConfiguration(name, make_pair(port_mac, port_ip)))
+										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
+											return false;
+										}					
+										
+										portS.push_back(port_descr);	
 									}
 								}
 								else if(nf_name == VNF_GROUPS)
@@ -1069,11 +1142,12 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								return false;
 							}
 							
-							highlevel::VNFs vnfs(id, name, groups, vnf_template, portS);
+							highlevel::VNFs vnfs(id, name, groups, vnf_template, portS, portC);
 
 							graph.addVNF(vnfs);
 
 							portS.clear();
+							portC.clear();
 						}					
 				    	}
 					//Identify the end-points
@@ -1366,16 +1440,16 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									}
 									else if(epi_name == SAFE)
 									{
-										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",EP_GRE,SAFE,epi_value.getBool());
+										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",EP_GRE,SAFE,epi_value.getBool());
 									
-										safe = epi_value.getBool();
-										
-										if(safe)
-											gre_param[4] = string("true");
-										else
-											gre_param[4] = string("false"); 
+										safe = epi_value.getBool(); 
 									}
 								}
+							
+								if(safe)
+									gre_param[4] = string("true");
+								else
+									gre_param[4] = string("false");
 							
 								//Add gre-tunnel end-points
 								highlevel::EndPointGre ep_gre(id_gre[j], e_name, local_ip, remote_ip, interface, gre_key, ttl, safe);

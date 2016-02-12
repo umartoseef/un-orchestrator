@@ -81,15 +81,15 @@ error:
 }
 
 bool
-IvshmemCmdLineGenerator::get_port_cmdline(const char * port_name, char * cmdline, int size)
+IvshmemCmdLineGenerator::get_port_cmdline(const char * port_name, const char * port_alias, char * cmdline, int size)
 {
 	logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
-			"Generating command line for port '%s'", port_name);
+	       "Generating command line for port '%s' (alias '%s')", port_name, port_alias ? port_alias : "N/A");
 
 	char c[100];
 	int r;
 
-	sprintf(c, "./compute_controller/plugins/kvm-libvirt/cmdline_generator/build/cmdline_generator -p %s", port_name);
+	sprintf(c, "./compute_controller/plugins/kvm-libvirt/cmdline_generator/build/cmdline_generator -p %s %s", port_name, port_alias);
 
 	//if(mkfifo(port_name, 0666) == -1)
 	//{
@@ -120,15 +120,15 @@ error:
 	return false;
 }
 
-bool IvshmemCmdLineGenerator::get_single_cmdline(char * cmdline, int size, const std::string& vnf_name, std::vector<std::string>& port_names)
+bool IvshmemCmdLineGenerator::get_single_cmdline(char * cmdline, int size, const std::string& vnf_name, std::vector<std::pair< std::string, std::string> >& port_names)
 {
     int r;
 
     ostringstream oss;
     oss << "./compute_controller/plugins/kvm-libvirt/cmdline_generator/build/cmdline_generator";
     oss << " -n " << vnf_name << " -m";
-    for (vector<string>::iterator it = port_names.begin(); it != port_names.end(); ++it) {
-        oss << " -p " << (*it);
+    for (vector< pair<string, string> >::iterator it = port_names.begin(); it != port_names.end(); ++it) {
+	    oss << " -p " << it->first << " " << it->second;
     }
     logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
             "Generating IVSHMEM QEMU command line using: %s", oss.str().c_str());

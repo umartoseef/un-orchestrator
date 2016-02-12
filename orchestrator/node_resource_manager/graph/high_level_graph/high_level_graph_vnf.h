@@ -44,18 +44,24 @@ private:
 	string vnf_template;
 	
 	/**
-	*	
+	*	@brief: the list of ports configuration of the VNF
 	*/
-	list<pair<string, string> > ports;
+	list<vector<string> > ports;
+	
+	/**
+	*	@brief: the list of control ports configuration of the VNF
+	*/
+	list<pair<string, string> > control_ports;
 	
 public:
 
-	VNFs(string id, string name, string groups, string vnf_template, list<pair<string, string> > ports);
+	VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports, list<pair<string, string> > control_ports);
 	string getId();
 	string getName();
 	string getGroups();
 	string getVnfTemplate();
-	list<pair<string, string> > getPorts();
+	list<vector<string> > getPorts();
+	list<pair<string, string> > getControlPorts();
 	
 	~VNFs();
 	

@@ -43,6 +43,30 @@ Libvirt::~Libvirt()
 #endif
 }
 
+string Libvirt::splitIpNetmask(string ip_netmask)
+{
+	char delimiter[] = "/";
+	char tmp[BUFFER_SIZE];
+	strcpy(tmp,ip_netmask.c_str());
+	char *pnt=strtok((char*)ip_netmask.c_str(), delimiter);
+	string ip_address;
+
+	int i = 0;
+	while( pnt!= NULL )
+	{
+		switch(i)
+		{
+			case 0:
+				ip_address = string(pnt);
+				return ip_address;
+			break;
+		}
+		
+		pnt = strtok( NULL, delimiter );
+		i++;
+	}
+}
+
 bool Libvirt::isSupported(Description&)
 {
 #ifndef DIRECT_KVM_IVSHMEM
@@ -283,13 +307,21 @@ bool Libvirt::startNF(StartNFIn sni)
 	/* Create XML for VM */
 
 	/* Create NICs */
-	vector<string> ivshmemPorts;
+	vector< pair<string, string> > ivshmemPorts; // name, alias
 
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+	list<pair<string, string> > portsConfiguration = sni.getPortsConfiguration();
+	list<pair<string, string> >::iterator pd = portsConfiguration.begin();
+	string port_ip_address = pd->second;
+	
+	/* retrieve ip address */
+	string ip_address = splitIpNetmask(port_ip_address);
+	
 	for(map<unsigned int, string>::iterator p = namesOfPortsOnTheSwitch.begin(); p != namesOfPortsOnTheSwitch.end(); p++)
 	{
 		const unsigned int port_id = p->first;
 		const string& port_name = p->second;
+		string port_mac_address = pd->first;
 
 		PortType port_type = description->getPortTypes().at(port_id);
 		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "NF Port \"%s\":%d (%s) is of type %s", nf_name.c_str(), port_id, port_name.c_str(), portTypeToString(port_type).c_str());
@@ -318,12 +350,27 @@ bool Libvirt::startNF(StartNFIn sni)
 		    xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
 	    }
 	    else if (port_type == IVSHMEM_PORT) {
-	    	ivshmemPorts.push_back(port_name);
+			ostringstream local_name;  // Name of the port as known by the VNF internally - We set a convention here
+			local_name << "p" << port_id;  // Will result in p<n>_tx and p<n>_rx rings
+
+			ivshmemPorts.push_back(pair<string, string>(port_name, local_name.str()));
 	    }
 	    else if (port_type == VHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 			xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
 
+			if(!port_mac_address.empty())
+			{
+				xmlNodePtr mac_addr = xmlNewChild(ifn, NULL, BAD_CAST "mac", NULL);
+				xmlNewProp(mac_addr, BAD_CAST "address", BAD_CAST port_mac_address.c_str());
+			}
+#ifdef ENABLE_VNF_PORTS_IP_CONFIGURATION
+			if(!ip_address.empty())
+			{
+				xmlNodePtr ip_addr = xmlNewChild(ifn, NULL, BAD_CAST "ip", NULL);
+				xmlNewProp(ip_addr, BAD_CAST "address", BAD_CAST ip_address.c_str());
+			}
+#endif	
 			xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
 			xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name.c_str());
 			xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");
@@ -340,6 +387,8 @@ bool Libvirt::startNF(StartNFIn sni)
 	    	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
 	    	return false;
 	    }
+	    
+	    pd++;
 	}
 
 	if (! ivshmemPorts.empty()) {
@@ -351,8 +400,8 @@ bool Libvirt::startNF(StartNFIn sni)
 
         ostringstream cmd;
         cmd << "group-ivshmems " << sni.getLsiID() << "." << sni.getNfName();
-        for (vector<string>::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
-            cmd << " IVSHMEM:" << sni.getLsiID() << "-" << *it;
+        for (vector< pair<string, string> >::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
+            cmd << " IVSHMEM:" << sni.getLsiID() << "-" << it->first;
         }
         logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Generating IVSHMEM QEMU command line using ERFS cmd: %s", cmd.str().c_str());
 
@@ -396,8 +445,8 @@ bool Libvirt::startNF(StartNFIn sni)
     	}
         ivshmemCmdElems.push_back(cmdline);
         // Port rings
-        for (vector<string>::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
-            if(!ivshmemCmdGenerator.get_port_cmdline((*it).c_str(), cmdline, sizeof(cmdline))) {
+        for (vector< pair<string,string> >::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
+            if(!ivshmemCmdGenerator.get_port_cmdline((it->first).c_str(), (it->second).c_str(), cmdline, sizeof(cmdline))) {
                 return false;
             }
             ivshmemCmdElems.push_back(cmdline);

@@ -37,6 +37,16 @@ private:
 	*	@brief: mapping of port_id to name of port on the vSwitch for ports associated with the network function
 	*/
 	map<unsigned int, string> namesOfPortsOnTheSwitch;
+	
+	/**
+	*	@brief: list of ports with own configuration associated with the network function
+	*/
+	list<pair<string, string> > portsConfiguration;
+	
+	/**
+	*	@brief: list of control port associated with the network function
+	*/
+	list<pair<string, string> > controlConfiguration;
 		
 	/**
 	*	@brief: mask of the cores to be assigned to the network functon.
@@ -45,8 +55,8 @@ private:
 	uint64_t coreMask;
 
 protected:
-	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, uint64_t coreMask = 0x0)
-		: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), coreMask(coreMask)
+	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string > > portsConfiguration, list<pair<string, string > > controlConfiguration, uint64_t coreMask = 0x0)
+		: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), portsConfiguration(portsConfiguration), coreMask(coreMask)
 	{
 	}
 	
@@ -65,6 +75,16 @@ public:
 	const map<unsigned int, string>& getNamesOfPortsOnTheSwitch() const
 	{
 		return namesOfPortsOnTheSwitch;
+	}
+	
+	const list<pair<string, string> >& getPortsConfiguration() const
+	{
+		return portsConfiguration;
+	}
+	
+	const list<pair<string, string> >& getControlConfiguration() const
+	{
+		return controlConfiguration;
 	}
 	
 	uint64_t getCoreMask() const

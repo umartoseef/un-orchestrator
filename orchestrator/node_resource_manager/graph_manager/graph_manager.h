@@ -55,6 +55,8 @@ typedef struct
 		ComputeController *computeController;
 		
 		map<unsigned int, string> namesOfPortsOnTheSwitch;
+		list<pair<string, string> > portsConfiguration;
+		list<pair<string, string> > controlConfiguration;
 	}to_thread_t;
 
 class GraphManager
