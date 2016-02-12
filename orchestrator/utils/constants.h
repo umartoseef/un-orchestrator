@@ -70,6 +70,7 @@
 			#define REMOTE_IP		"remote-ip"
 			#define TTL				"ttl"
 			#define GRE_KEY			"gre-key"
+			#define SAFE			"safe"
 		#define VLAN			"vlan"
 			#define V_ID			"vlan-id"
 						
@@ -160,7 +161,7 @@
 *
 *	XXX This constants must be updated in case the XML schema is modified
 */
-#define PHY_PORTS_XSD			"config/universal-node-schema.xsd"
+#define PHY_PORTS_XSD			"/root/universal-node-schema.xsd"
 
 #define RESOURCES_ELEMENT		"resources"
 #define CPU_ELEMENT				"cpu"

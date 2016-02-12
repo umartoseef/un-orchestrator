@@ -1306,9 +1306,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							//Iterate on the gre object
 							for( int gre_obj = 0; gre_obj < ii; ++gre_obj )
 							{
-								vector<string> gre_param (4);
+								vector<string> gre_param (5);
 						
 								string local_ip, remote_ip, interface, ttl, gre_key;
+								bool safe = false;
 						
 								int i = 0;
 				
@@ -1363,10 +1364,21 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										
 										i++;	
 									}
+									else if(epi_name == SAFE)
+									{
+										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",EP_GRE,SAFE,epi_value.getBool());
+									
+										safe = epi_value.getBool();
+										
+										if(safe)
+											gre_param[4] = string("true");
+										else
+											gre_param[4] = string("false"); 
+									}
 								}
 							
 								//Add gre-tunnel end-points
-								highlevel::EndPointGre ep_gre(id_gre[j], e_name, local_ip, remote_ip, interface, gre_key, ttl);
+								highlevel::EndPointGre ep_gre(id_gre[j], e_name, local_ip, remote_ip, interface, gre_key, ttl, safe);
 								
 								graph.addEndPointGre(ep_gre);
 							

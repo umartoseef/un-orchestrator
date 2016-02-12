@@ -2,210 +2,16 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT(node-orchestrator)
 
-IF(CMAKE_COMPILER_IS_GNUCXX)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
-ENDIF(CMAKE_COMPILER_IS_GNUCXX)
-IF(CMAKE_COMPILER_IS_GNUCC)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
-ENDIF(CMAKE_COMPILER_IS_GNUCC)
-
-
+ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
 
 # Rather complicated CMake code for setting the logging level
-SET(LOGGING_LEVEL "ORCH_WARNING" CACHE STRING "Orchestrator logging levels: ORCH_DEBUG, ORCH_DEBUG_INFO, ORCH_WARNING, ORCH_ERROR, ORCH_INFO")
-SET(LOGGING_LEVEL_VALUES "ORCH_DEBUG" "ORCH_DEBUG_INFO" "ORCH_WARNING" "ORCH_ERROR" "ORCH_INFO")
-SET_PROPERTY(CACHE LOGGING_LEVEL PROPERTY STRINGS ${LOGGING_LEVEL_VALUES})
-LIST(FIND LOGGING_LEVEL_VALUES ${LOGGING_LEVEL} LOGGING_LEVEL_INDEX)
-
-IF(${LOGGING_LEVEL_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${LOGGING_LEVEL} not supported, valid entries are ${LOGGING_LEVEL_VALUES}")
-ENDIF()
-IF(${LOGGING_LEVEL_INDEX} EQUAL 0)
-	ADD_DEFINITIONS(-DLOGGING_LEVEL=ORCH_DEBUG)
-ENDIF()
-IF(${LOGGING_LEVEL_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DLOGGING_LEVEL=ORCH_DEBUG_INFO)
-ENDIF()
-IF(${LOGGING_LEVEL_INDEX} EQUAL 2)
-	ADD_DEFINITIONS(-DLOGGING_LEVEL=ORCH_WARNING)
-ENDIF()
-IF(${LOGGING_LEVEL_INDEX} EQUAL 3)
-	ADD_DEFINITIONS(-DLOGGING_LEVEL=ORCH_ERROR)
-ENDIF()
-IF(${LOGGING_LEVEL_INDEX} EQUAL 4)
-	ADD_DEFINITIONS(-DLOGGING_LEVEL=ORCH_INFO)
-ENDIF()
+ADD_DEFINITIONS(-DLOGGING_LEVEL=ORCH_DEBUG_INFO)
 # End of the rather complicated CMake code for setting the logging level
 
 # Rather complicated CMake code for selecting the virtual switch implementation
-SET(VSWITCH_IMPLEMENTATION "OVS-OVSDB" CACHE STRING "vSwitch implementation: XDPD, OVS-OFCONFIG, OVS-DPDK, OVS-OVSDB, ERFS")
-SET(VSWITCH_IMPLEMENTATION_VALUES "XDPD" "OVS-OFCONFIG" "OVS-DPDK" "OVS-OVSDB" "ERFS") #Add here other implementations
-SET_PROPERTY(CACHE VSWITCH_IMPLEMENTATION PROPERTY STRINGS ${VSWITCH_IMPLEMENTATION_VALUES})
-LIST(FIND VSWITCH_IMPLEMENTATION_VALUES ${VSWITCH_IMPLEMENTATION} VSWITCH_IMPLEMENTATION_INDEX)
+ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDB)
 
-IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${VSWITCH_IMPLEMENTATION} not supported, valid entries are ${VSWITCH_IMPLEMENTATION_VALUES}")
-ENDIF()
-IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0)
-	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_XDPD)
-ENDIF()
-IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OFCONFIG)
-ENDIF()
-IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2)
-	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDPDK)
-ENDIF()
-IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3)
-	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDB)
-ENDIF()
-IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 4)
-        ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_ERFS)
-ENDIF()
-
-OPTION(
-	STARTVNF_SINGLE_THREAD
-	"Turn on to start the VNF sequentially"
-	OFF
-)
-
-IF(STARTVNF_SINGLE_THREAD)
-	ADD_DEFINITIONS(-DSTARTVNF_SINGLE_THREAD)
-ENDIF(STARTVNF_SINGLE_THREAD)
-
-OPTION(
-	ENABLE_KVM
-	"Turn on to support NFs implemented in KVM-based virtual machines"
-	ON
-)
-IF(ENABLE_KVM)
-	ADD_DEFINITIONS(-DENABLE_KVM)
-ENDIF(ENABLE_KVM)
-
-OPTION(
-	ENABLE-DPDK-CMDLINE-GENERATOR
-	"Turn on to compile the code to generate the command line needed to add ivshmem device in the VM"
-	OFF
-)
-
-OPTION(
-	ENABLE_OVSDB_DPDK
-	"Turn on to support OVS with DPDK netdev using the OVS-OVSDB netwrok controller plugin"
-	OFF
-)
-IF(ENABLE_OVSDB_DPDK)
-	ADD_DEFINITIONS(-DENABLE_OVSDB_DPDK)
-ENDIF(ENABLE_OVSDB_DPDK)
 #################################################################################################################
-
-# Rather complicated CMake code for selecting the PubSub implementation
-SET(ENABLE_DOUBLE_DECKER "NONE" CACHE STRING "Pub/Sub implementation: NONE, DOUBLE-DECKER")
-SET(ENABLE_DOUBLE_DECKER_VALUES "NONE" "DOUBLE-DECKER") #Add here other implementations
-SET_PROPERTY(CACHE ENABLE_DOUBLE_DECKER PROPERTY STRINGS ${ENABLE_DOUBLE_DECKER_VALUES})
-LIST(FIND ENABLE_DOUBLE_DECKER_VALUES ${ENABLE_DOUBLE_DECKER} ENABLE_DOUBLE_DECKER_INDEX)
-
-IF(${ENABLE_DOUBLE_DECKER_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${ENABLE_DOUBLE_DECKER} not supported, valid entries are ${ENABLE_DOUBLE_DECKER_VALUES}")
-ENDIF()
-IF(${ENABLE_DOUBLE_DECKER_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DENABLE_DOUBLE_DECKER)
-ENDIF()
-
-OPTION(
-	RUN_NFS
-	"Turn on the actually run the NFs"
-	ON
-)
-IF(RUN_NFS)
-	ADD_DEFINITIONS(-DRUN_NFS)
-ENDIF(RUN_NFS)
-
-OPTION(
-	ENABLE_DOCKER
-	"Turn on the support of NFs implemented in Docker containers"
-	OFF
-)
-IF(ENABLE_DOCKER)
-	ADD_DEFINITIONS(-DENABLE_DOCKER)
-ENDIF(ENABLE_DOCKER)
-
-OPTION(
-	ENABLE_NATIVE
-	"Turn on the support of NFs implemented in native form"
-	OFF
-)
-IF(ENABLE_NATIVE)
-	ADD_DEFINITIONS(-DENABLE_NATIVE)
-ENDIF(ENABLE_NATIVE)
-
-
-OPTION(ENABLE_DPDK_PROCESSES
-	"Turn on the support of NFs implemented in as DPDK processes"
-	OFF
-)
-IF(ENABLE_DPDK_PROCESSES)
-	ADD_DEFINITIONS(-DENABLE_DPDK_PROCESSES)
-ENDIF(ENABLE_DPDK_PROCESSES)
-
-
-OPTION(DEBUG_KVM
-	"Turn on the debug of the KVM-libvirt compute plugin"
-	OFF
-)
-
-IF(DEBUG_KVM)
-	ADD_DEFINITIONS(-DDEBUG_KVM)
-ENDIF(DEBUG_KVM)
-
-OPTION(
-	POLITO_MESSAGE
-	"Turn on to support a slightly different JSON message describing the graph"
-	OFF
-)
-IF(POLITO_MESSAGE)
-	ADD_DEFINITIONS(-DPOLITO_MESSAGE)
-ENDIF(POLITO_MESSAGE)
-
-OPTION(
-	LOG_1024X768
-	"Turn on to print the log for a monitor of 1024 X 768"
-	OFF
-)
-IF(LOG_1024X768)
-	ADD_DEFINITIONS(-DLOG_1024X768)
-ENDIF(LOG_1024X768)
-
-OPTION(
-	DEBUG_OPENFLOW
-	"Turn on to enable the debug of Openflow messages"
-	OFF
-)
-IF(DEBUG_OPENFLOW)
-	ADD_DEFINITIONS(-DDEBUG_OPENFLOW)
-ENDIF(DEBUG_OPENFLOW)
-
-
-OPTION(
-	VIRTUALIZER_NFFG
-	"Turn on to support the virtualizer NF-FG model defined in WP3"
-	OFF
-)
-IF(VIRTUALIZER_NFFG)
-	ADD_DEFINITIONS(-DUNIFY_NFFG)
-ENDIF(VIRTUALIZER_NFFG)
-
-OPTION(
-	LOG_ON_FILE
-	"Turn on to print log messages on the file 'node-orchestrator.log'. If disabled, stdout is used for the log."
-	OFF
-)
-IF(LOG_ON_FILE)
-	ADD_DEFINITIONS(-DLOG_ON_FILE)
-ENDIF(LOG_ON_FILE)
-
-
-MARK_AS_ADVANCED(
-	DEBUG_KVM DEBUG_OPENFLOW POLITO_MESSAGE LOG_1024X768 RUN_NFS STARTVNF_SINGLE_THREAD
-)
 
 # Set source files
 SET(SOURCES
@@ -309,160 +115,26 @@ SET(SOURCES
 	utils/sockutils.c
 )
 
-IF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
-    SET(SOURCES1
+SET(SOURCES1
     ${SOURCES}
-		node_resource_manager/pub_sub_manager/PubSubManager.h
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.cc
-		              
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClient.h
-    )
-ELSE()
-     SET(SOURCES1
-         ${SOURCES}
-    	)
-ENDIF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
-
-IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
-    SET(SOURCES2
-    ${SOURCES1}
-	network_controller/switch_manager/plugins/xdpd/xdpd_manager.h
-	network_controller/switch_manager/plugins/xdpd/xdpd_manager.cc
-	network_controller/switch_manager/plugins/xdpd/xdpd_constants.h
-    )
-ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
-
-IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
-    SET(SOURCES2
-    ${SOURCES1}
-	network_controller/switch_manager/plugins/ovs-ofconfig/commands.h
-	network_controller/switch_manager/plugins/ovs-ofconfig/commands.cc
-	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_constants.h
-	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.h
-	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.cc
-    )
-ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
-
-IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 2)
-    SET(SOURCES2
-    ${SOURCES1}
-	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.h
-	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.cc
-	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_constants.h
-    )
-ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 2)
-
-IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
-    SET(SOURCES2
-    ${SOURCES1}
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.cc
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_constants.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.h
     network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.cc
-    )
-ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
-
-IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 4)
-    SET(SOURCES2
-    ${SOURCES}
-	network_controller/switch_manager/plugins/erfs/manager.h
-	network_controller/switch_manager/plugins/erfs/manager.cc
-	network_controller/switch_manager/plugins/erfs/constants.h
-    )
-ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 4)
-
-IF(ENABLE_KVM)
-    SET(SOURCES3
-    ${SOURCES2}
-	compute_controller/plugins/kvm-libvirt/libvirt.cc
-	compute_controller/plugins/kvm-libvirt/libvirt.h	
-	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc
-	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.h
-	)
-ELSE()
-     SET(SOURCES3
-         ${SOURCES2}
-    	)
-ENDIF(ENABLE_KVM)
-
-IF(ENABLE_DOCKER)
-    SET(SOURCES4
-    ${SOURCES3}
-	compute_controller/plugins/docker/docker.cc
-	compute_controller/plugins/docker/docker.h
-	compute_controller/plugins/docker/docker_constants.h
-	)
-ELSE()
-     SET(SOURCES4
-         ${SOURCES3}
-    	)
-ENDIF(ENABLE_DOCKER)
-
-
-IF(VIRTUALIZER_NFFG)
-	SET(SOURCES5
-    ${SOURCES4}
-    node_resource_manager/virtualizer/virtualizer.cc
-    node_resource_manager/virtualizer/virtualizer.h
-	)
-ELSE()
-	SET(SOURCES5
-    	${SOURCES4}
-	)
-ENDIF(VIRTUALIZER_NFFG)
-
-IF(ENABLE_DPDK_PROCESSES)
-    SET(SOURCES6
-    ${SOURCES5}
-	compute_controller/plugins/dpdk/dpdk.h
-	compute_controller/plugins/dpdk/dpdk.cc
-	compute_controller/plugins/dpdk/dpdk_constants.h
-	compute_controller/plugins/dpdk/dpdk_description.cc
-	compute_controller/plugins/dpdk/dpdk_description.h
-	)
-ELSE()
-     SET(SOURCES6
-         ${SOURCES5}
-    	)
-ENDIF(ENABLE_DPDK_PROCESSES)
-
-IF(ENABLE_NATIVE)
-    SET(SOURCES7
-    ${SOURCES6}
-	compute_controller/plugins/native/native.cc
-	compute_controller/plugins/native/native.h
-	compute_controller/plugins/native/native_constants.h
-	compute_controller/plugins/native/capability.h
-	compute_controller/plugins/native/capability.cc
-	compute_controller/plugins/native/native_description.h
-	compute_controller/plugins/native/native_description.cc
-	)
-ELSE()
-     SET(SOURCES7
-         ${SOURCES6}
-    	)
-ENDIF(ENABLE_NATIVE)
+)
 
 INCLUDE_DIRECTORIES (
+	/usr/local/include
+	/usr/local/lib
 	/usr/include/boost
 	/usr/include/libxml2
 )
 
-#Include specific for the virtualizer NF-FG model defined in WP3
-IF(VIRTUALIZER_NFFG)
-	find_package(PythonLibs REQUIRED)
-	INCLUDE_DIRECTORIES (
-		${PYTHON_INCLUDE_DIRS}
-	)
-ENDIF(VIRTUALIZER_NFFG)
-
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES7}
+	${SOURCES1}
 )
 
 LINK_DIRECTORIES(
@@ -475,80 +147,12 @@ LINK_DIRECTORIES(
 
 TARGET_LINK_LIBRARIES( node-orchestrator
 	libpthread.so
-	/usr/local/lib/librofl_common.so
-	libjson_spirit.so
 	libmicrohttpd.so
 	libboost_system.so
 	libxml2.so
 	libsqlite3.so
 	libcrypto.so
-	liburcu.so
-	libzmq.so
-	libczmq.so
-	libsodium.so
-	libjson.so
-	libddclient.so
+	libjson_spirit.so
+	librofl_common.so
 	-lrt
 )
-
-#Links specific for ovs
-IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
-	TARGET_LINK_LIBRARIES( node-orchestrator
-		libnetconf.so
-	)
-ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
-
-#Links specific for KVM
-IF(ENABLE_KVM)
-	TARGET_LINK_LIBRARIES( node-orchestrator
-		libvirt.so
-	)
-ENDIF(ENABLE_KVM)
-
-#Links specific for the virtualizer NF-FG model defined in WP3
-IF(VIRTUALIZER_NFFG)
-    TARGET_LINK_LIBRARIES( node-orchestrator
-		libpython2.7.so
-		${PYTHON_LIBRARIES}
-	)
-ENDIF(VIRTUALIZER_NFFG)
-
-# Add configuration rules to compile command line generator
-IF(ENABLE-DPDK-CMDLINE-GENERATOR)
-
-	IF(NOT DEFINED ENV{RTE_SDK})
-		message(FATAL_ERROR "Please define RTE_SDK environment variable (it must point to the DPDK folder)")
-	ENDIF(NOT DEFINED ENV{RTE_SDK})
-	
-	IF(NOT DEFINED ENV{RTE_TARGET})
-		message(FATAL_ERROR "Please define RTE_TARGET environment variable as follows: 'export RTE_TARGET=x86_64-ivshmem-linuxapp-gcc'")
-	ENDIF(NOT DEFINED ENV{RTE_TARGET})
-
-	ADD_DEPENDENCIES(node-orchestrator cmd_line_generator)
-
-	ADD_CUSTOM_TARGET(
-		cmd_line_generator
-		COMMAND make
-		WORKING_DIRECTORY compute_controller/plugins/kvm-libvirt/cmdline_generator/
-		)
-ENDIF(ENABLE-DPDK-CMDLINE-GENERATOR)
-
-###############################################################################
-
-#Check unsupported configurations
-
-IF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
-	#This configuration (ovs (ofconfig/ovsdb) + dpdk processes) is not supported
-	message(FATAL_ERROR "OvS not supported with Dpdk processes")
-ENDIF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
-
-IF(ENABLE-DPDK-CMDLINE-GENERATOR AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) )
-	#This configuration (ovs-ofconfig + kvm-ivshmem) is not supported
-	message(FATAL_ERROR "OVS-OFCONFIG not supported with KVM-IVSHMEM")
-ENDIF(ENABLE-DPDK-CMDLINE-GENERATOR AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) )
-
-IF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_NATIVE) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) )
-	#No execution environment is selected
-	message(FATAL_ERROR "At least one execution environmnet must be enabled")
-ENDIF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_NATIVE) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) )
-

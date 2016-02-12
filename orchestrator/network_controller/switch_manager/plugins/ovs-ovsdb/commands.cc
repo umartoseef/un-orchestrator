@@ -455,6 +455,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 			char key[BUF_SIZE];
 			char port_name[BUF_SIZE];
 			char ifac[BUF_SIZE];
+			char is_safe[BUF_SIZE];
 		
 			string id = ep->first;
 
@@ -464,6 +465,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 			strcpy(key, gre_param[0].c_str());
 		    strcpy(local_ip, gre_param[1].c_str());
 		    strcpy(remote_ip, gre_param[2].c_str());
+		    strcpy(is_safe, gre_param[4].c_str());
 	    	
 			sprintf(port_name, "gre%d", gnumber);
 			
@@ -471,7 +473,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 			
 			gnumber++;
 			
-			add_endpoint(dnumber, local_ip, remote_ip, key, port_name, ifac, s, cli.isSafe());
+			add_endpoint(dnumber, local_ip, remote_ip, key, port_name, ifac, s, is_safe);
 			
 			endpoints_ports[id] = rnumber-1;
 			
@@ -656,6 +658,11 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	sprintf(ifac, "iface%d", rnumber);
 	if (!is_nf_port) {
 		uuid_name = p;
+		/**
+ 		* Build name that is valid as UUID: no '.', no '_' ...
+ 		*/
+		std::replace(uuid_name.begin(), uuid_name.end(), '.', 'p');
+		std::replace(uuid_name.begin(), uuid_name.end(), '-', 'p');
 		port_name = p;
 		port_name_on_switch = p;
 	} else {
@@ -920,9 +927,9 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	}
 		
 	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 		
 	Value value;
     read( read_buf, value );
@@ -1007,7 +1014,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	return port_name_on_switch;
 }
 
-void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_ip[BUF_SIZE], char key[BUF_SIZE], char port_name[BUF_SIZE], char ifac[BUF_SIZE], int s, bool is_safe)
+void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_ip[BUF_SIZE], char key[BUF_SIZE], char port_name[BUF_SIZE], char ifac[BUF_SIZE], int s, char is_safe[BUF_SIZE])
 {
     ssize_t nwritten;
 	
@@ -1039,7 +1046,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 	/*Insert an Interface*/
 	row["name"] = port_name;
 	//test if gre tunnel required is safe or unsafe
-	if(is_safe)
+	if(strcmp(is_safe, "true") == 0)
 		row["type"] = "ipsec_gre";
 	else
 		row["type"] = "gre";
@@ -1053,7 +1060,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 	peer.push_back("map");
 	
 	//test if GRE tunnel required is safe (true) or unsafe (false)
-	if(is_safe)
+	if(strcmp(is_safe, "true") == 0)
 	{
 		peer2.push_back("certificate");
 		peer2.push_back(this->ipsec_certificate);		
@@ -1061,7 +1068,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 		peer2.clear();
 
 		peer2.push_back("pmtud");
-		peer2.push_back(false);		
+		peer2.push_back("false");		
 		peer1.push_back(peer2);
 		peer2.clear();
 	
@@ -1254,11 +1261,11 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 		
 	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
-	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 		
 	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
-	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, read_buf);	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);	
 		
 	Value value;
     read( read_buf, value );
@@ -1511,6 +1518,7 @@ AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	char local_ip[BUF_SIZE];
 	char remote_ip[BUF_SIZE];
 	char key[BUF_SIZE];
+	char safe[BUF_SIZE];
 	
 	string id = aepi.getEPname();
 
@@ -1520,6 +1528,7 @@ AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	strcpy(key, l_param[1].c_str());
 	strcpy(local_ip, l_param[0].c_str());
 	strcpy(remote_ip, l_param[2].c_str());
+	strcpy(safe, l_param[4].c_str());
 	    	
 	sprintf(port_name, "gre%d", gnumber);
 			
@@ -1528,7 +1537,7 @@ AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	gnumber++;
 
 	//create endpoint
-	add_endpoint(aepi.getDpid(), local_ip, remote_ip, key, port_name, ifac, s);
+	add_endpoint(aepi.getDpid(), local_ip, remote_ip, key, port_name, ifac, s, safe);
 	
 	endpoint_l[aepi.getDpid()].push_back(id);
 	

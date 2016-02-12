@@ -3,8 +3,8 @@
 namespace highlevel
 {
 
-EndPointGre::EndPointGre(string id, string name, string local_ip, string remote_ip, string interface, string gre_key, string ttl) :
-	id(id), name(name), local_ip(local_ip), remote_ip(remote_ip), interface(interface), gre_key(gre_key), ttl(ttl)
+EndPointGre::EndPointGre(string id, string name, string local_ip, string remote_ip, string interface, string gre_key, string ttl, bool is_safe) :
+	id(id), name(name), local_ip(local_ip), remote_ip(remote_ip), interface(interface), gre_key(gre_key), ttl(ttl), is_safe(is_safe)
 {
 
 }
@@ -57,6 +57,11 @@ string EndPointGre::getTtl()
 	return ttl;
 }
 
+bool EndPointGre::isSafe()
+{
+	return is_safe;
+}
+
 void EndPointGre::print()
 {
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
@@ -70,6 +75,7 @@ void EndPointGre::print()
 		cout << "\t\tinterface:" << interface << endl;
 		cout << "\t\t\tgre-key: " << gre_key << endl;
 		cout << "\t\tttl:" << ttl << endl;
+		cout << "\t\tis_safe:" << is_safe << endl;
 		cout << "\t\t}" << endl;
 	}
 }
@@ -88,6 +94,7 @@ Object EndPointGre::toJSON()
 	iface[GRE_KEY] = gre_key.c_str();
 	if(strcmp(ttl.c_str(), "") != 0)
 		iface[TTL] = ttl.c_str();
+	iface[SAFE] = is_safe;
 	
 	EndPointGre[EP_GRE] = iface;
 	

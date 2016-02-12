@@ -145,7 +145,7 @@ public:
 	*		other graphs.
 	*
 	*	@param: ep			Name of the endpoint to de added
-	*	@param: p			List of three elements (key, local ip and remote ip)
+	*	@param: p			List of five elements (key, local ip, remote ip, interface and safe)
 	*
 	*	@return: true
 	*/

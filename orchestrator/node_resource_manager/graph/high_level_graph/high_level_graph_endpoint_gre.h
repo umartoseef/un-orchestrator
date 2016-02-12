@@ -57,9 +57,14 @@ private:
 	*/
 	string ttl;
 	
+	/**
+	*	@brief: true (GRE tunnel over IPsec), false (GRE tunnel)
+	*/
+	bool is_safe;
+	
 public:
 
-	EndPointGre(string id, string name, string local_ip, string remote_ip, string interface, string gre_key, string ttl);
+	EndPointGre(string id, string name, string local_ip, string remote_ip, string interface, string gre_key, string ttl, bool is_safe);
 	string getId();
 	string getName();
 	string getLocalIp();
@@ -67,6 +72,7 @@ public:
 	string getInterface();
 	string getGreKey();
 	string getTtl();
+	bool isSafe();
 	
 	~EndPointGre();
 	
